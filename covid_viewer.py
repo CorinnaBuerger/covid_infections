@@ -195,15 +195,17 @@ class CovidData():
             TOOLS = [HoverTool(tooltips=TOOLTIPS), "pan", 
                      "wheel_zoom", "box_zoom", "reset"]
             HEIGHT = 600
-            WIDTH = 600
+            WIDTH = 760
             SIZE = 1
             CIRCLE_SIZE = 8
 
-            colors = ["lightgray", "red", ]
+            colors = ["lightgray", "red"]
             pd = figure(x_axis_type="datetime", title="Daily Infections", 
-                        plot_height=HEIGHT, plot_width=WIDTH, tools=TOOLS)
+                        plot_height=HEIGHT, plot_width=WIDTH, tools=TOOLS,
+                        sizing_mode="scale_width")
             pt = figure(x_axis_type="datetime", title="Total Infections", 
-                        plot_height=HEIGHT, plot_width=WIDTH, tools=TOOLS)
+                        plot_height=HEIGHT, plot_width=WIDTH, tools=TOOLS,
+                        sizing_mode="scale_width" )
 
             pd.vbar(x='dates', top="World", color=colors[0], line_width=SIZE,
                     source=source_daily, legend_label="Worldwide")
@@ -245,14 +247,33 @@ class CovidData():
                                   reverse=True)
             options = []
             for tpl in sort_options:
-                options.append(tpl[0])
-            options.remove("selected")
+                total_cases_list = list(str(tpl[1][-1]))
+                total_cases_str_sep = ""
+                for i, num in enumerate(total_cases_list):
+                    total_cases_str_sep += num
+                    if i == len(total_cases_list)-1:
+                        continue
+                    elif len(total_cases_list) % 3 == 0:
+                        if i % 3 == 2:
+                            total_cases_str_sep += ","
+                    elif len(total_cases_list) % 3 == 1:
+                        if i % 3 == 0:
+                            total_cases_str_sep += ","
+                    elif len(total_cases_list) % 3 == 2:
+                        if i % 3 == 1:
+                            total_cases_str_sep += ","
+                if tpl[0] == name:
+                    selected_total_cases_sep = total_cases_str_sep
+                options.append(f"{tpl[0]}: {total_cases_str_sep} total cases")
+
+            options.remove(f"selected: {selected_total_cases_sep} total cases")
 
             df_dict_total["dates"] = dates
             df_dict_total["dates_str"] = dates_str
 
-            select = Select(title="Select a country", value=name,
-                            options=options)
+            select = Select(title="Select a country", 
+                            value=f"{name}: {selected_total_cases_sep} total cases",
+                            options=options, sizing_mode="scale_width")
             with open("main.js", "r") as f:
                 select.js_on_change("value", CustomJS(
                     args=dict(source_d=source_daily, source_t=source_total,
@@ -333,7 +354,7 @@ if __name__ == "__main__":
     else:
         module = argv[2].lower()
 
-    if len(argv) > 3:
+    if len(argv) > 3 and argv[3] != "--update" and argv[3] != "--help":
         output = argv[3]
         print("Don't forget to push your website in order to upload the latest changes made to ínfections.html")
     else:
