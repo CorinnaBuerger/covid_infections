@@ -6,11 +6,12 @@ from bokeh.io import output_file, show                       # type: ignore
 from datetime import datetime
 from matplotlib.dates import DateFormatter                   # type: ignore
 from sys import argv, exit
+import os
 import matplotlib.pyplot as plt                              # type: ignore
 import pandas as pd                                          # type: ignore
 import requests
 
-usage_msg = ("""Usage: covid_viewer <country> <module> [<output_file>] [--update] [--help]
+usage_msg = ("""Usage: covid_viewer <country> <bokeh/mpl> [<output_file>] [--update] [--help]
     --update\t\tupdate the local COVID data copy from JHU
     --help\t\tdisplay this help message
 
@@ -190,22 +191,23 @@ class CovidData():
             XAXIS_LABEL = "Date"
             YAXIS_LABEL = "Death Cases"
             LEGEND_LOC = "top_left"
-            TOOLTIPS = [("Date", "@dates_str"), ("Cases of selected country", "@selected"),
+            TOOLTIPS = [("Date", "@dates_str"), 
+                        ("Cases of selected country", "@selected"),
                         ("Cases worldwide", "@World")]
             TOOLS = [HoverTool(tooltips=TOOLTIPS), "pan", 
                      "wheel_zoom", "box_zoom", "reset"]
             HEIGHT = 600
             WIDTH = 760
             SIZE = 1
-            CIRCLE_SIZE = 8
+            CIRCLE_SIZE = 12
 
             colors = ["lightgray", "red"]
             pd = figure(x_axis_type="datetime", title="Daily Infections", 
-                        plot_height=HEIGHT, plot_width=WIDTH, tools=TOOLS,
-                        sizing_mode="scale_width")
+                        plot_height=HEIGHT, tools=TOOLS, width=WIDTH,
+                        css_classes=["we-need-this-for-manip"], name="d_infections")
             pt = figure(x_axis_type="datetime", title="Total Infections", 
-                        plot_height=HEIGHT, plot_width=WIDTH, tools=TOOLS,
-                        sizing_mode="scale_width" )
+                        plot_height=HEIGHT, tools=TOOLS, width=WIDTH,
+                        css_classes=["we-need-this-for-manip"], name="t_infections")
 
             pd.vbar(x='dates', top="World", color=colors[0], line_width=SIZE,
                     source=source_daily, legend_label="Worldwide")
@@ -333,6 +335,9 @@ class CovidData():
 
 
 if __name__ == "__main__":
+    print("current working directory: {}".format(os.getcwd()))
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
     if len(argv) < 2:
         CovidData.usage()
         exit(1)
@@ -343,8 +348,6 @@ if __name__ == "__main__":
         if param == "--help":
             CovidData.usage()
 
-    # TODO: validate, that country exists in df,
-    #       otherwise use a sensible default
     if argv[1].lower() == "us" or argv[1].lower() == "usa":
         country = "US"
     else:
@@ -354,9 +357,15 @@ if __name__ == "__main__":
     else:
         module = argv[2].lower()
 
-    if len(argv) > 3 and argv[3] != "--update" and argv[3] != "--help":
+    if len(argv) == 4 and argv[3] != "--update" and argv[3] != "--help":
         output = argv[3]
-        print("Don't forget to push your website in order to upload the latest changes made to ínfections.html")
+        print("Don't forget to push your website in order to" 
+              + "upload the latest changes made to infections.html")
+    elif len(argv) == 5:
+        if argv[3] != "--update" and argv[3] != "--help":
+            output = argv[3]
+        else:
+            output = argv[4]
     else:
         output = "infections.html"
 
