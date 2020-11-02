@@ -2,7 +2,8 @@ from bokeh.layouts import row, column                        # type: ignore
 from bokeh.models import ColumnDataSource, CustomJS, Select  # type: ignore
 from bokeh.models import HoverTool                           # type: ignore
 from bokeh.plotting import figure                            # type: ignore
-from bokeh.io import output_file, show                       # type: ignore
+from bokeh.io import output_file, show, save                 # type: ignore
+from bokeh.util.browser import view
 from datetime import datetime
 from matplotlib.dates import DateFormatter                   # type: ignore
 from sys import argv, exit
@@ -207,16 +208,16 @@ class CovidData():
                         css_classes=["we-need-this-for-manip"], name="d_infections")
             pt = figure(x_axis_type="datetime", title="Total Infections", 
                         plot_height=HEIGHT, tools=TOOLS, width=WIDTH,
-                        css_classes=["we-need-this-for-manip"], name="t_infections")
+                        css_classes=["we-need-this-for-manip-total"], name="t_infections")
 
-            pd.vbar(x='dates', top="World", color=colors[0], line_width=SIZE,
-                    source=source_daily, legend_label="Worldwide")
+            # pd.vbar(x='dates', top="World", color=colors[0], line_width=SIZE,
+            #         source=source_daily, legend_label="Worldwide")
             pd.vbar(x='dates', top="selected", color=colors[1], line_width=SIZE,
                     source=source_daily, legend_label="Selected Country")
             # HoverTool does not work for vbar so invisible circles are necessary
-            pd.circle(x='dates', y="World", color=colors[0], size=CIRCLE_SIZE,
-                      source=source_daily, legend_label="Worldwide", fill_alpha=0,
-                      line_alpha=0)
+            # pd.circle(x='dates', y="World", color=colors[0], size=CIRCLE_SIZE,
+            #           source=source_daily, legend_label="Worldwide", fill_alpha=0,
+            #           line_alpha=0)
             pd.circle(x='dates', y="selected", color=colors[1], size=CIRCLE_SIZE,
                       source=source_daily, legend_label="Selected Country", fill_alpha=0,
                       line_alpha=0)
@@ -224,13 +225,13 @@ class CovidData():
             pd.yaxis.axis_label = YAXIS_LABEL
             pd.xaxis.axis_label = XAXIS_LABEL
 
-            pt.vbar(x='dates', top="World", color=colors[0], line_width=SIZE,
-                    source=source_total, legend_label="Worldwide")
+            # pt.vbar(x='dates', top="World", color=colors[0], line_width=SIZE,
+            #         source=source_total, legend_label="Worldwide")
             pt.vbar(x='dates', top="selected", color=colors[1], line_width=SIZE,
                     source=source_total, legend_label="Selected Country")
-            pt.circle(x='dates', y="World", color=colors[0], size=CIRCLE_SIZE,
-                      source=source_total, legend_label="Worldwide", fill_alpha=0, 
-                      line_alpha=0)
+            # pt.circle(x='dates', y="World", color=colors[0], size=CIRCLE_SIZE,
+            #           source=source_total, legend_label="Worldwide", fill_alpha=0, 
+            #           line_alpha=0)
             pt.circle(x='dates', y="selected", color=colors[1], size=CIRCLE_SIZE,
                       source=source_total, legend_label="Selected Country", fill_alpha=0,
                       line_alpha=0)
@@ -283,7 +284,13 @@ class CovidData():
                               ), code=f.read()))
 
             plots = column(pd, pt)
-            show(column(select, plots)) 
+            # show(column(select, plots)) 
+
+            with open("template.html", "r") as f:
+                template = f.read()
+
+            save(column(select, plots), template=template)
+            view(output)
 
         if module == "mpl":
             confirmed_cases = []
